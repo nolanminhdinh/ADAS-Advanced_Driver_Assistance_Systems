@@ -124,39 +124,64 @@ Xe trang bị **5 Cảm biến Radar thế hệ mới của ZF Friedrichshafen**
 
 #### 1. Phương trình Trạng thái Hệ thống
 Vector trạng thái 2D của xe phía trước:
-$$\mathbf{x} = \begin{bmatrix} p_x \\ p_y \\ v_x \\ v_y \end{bmatrix}$$
+
+$$
+\mathbf{x} = \begin{bmatrix} p_x \\ p_y \\ v_x \\ v_y \end{bmatrix}
+$$
 
 Mô hình chuyển động vận tốc không đổi (Constant Velocity - CV):
-$$\mathbf{x}_k = \mathbf{F} \mathbf{x}_{k-1} + \mathbf{w}_k, \quad \mathbf{F} = \begin{bmatrix} 1 & 0 & \Delta t & 0 \\ 0 & 1 & 0 & \Delta t \\ 0 & 0 & 1 & 0 \\ 0 & 0 & 0 & 1 \end{bmatrix}, \quad \mathbf{w}_k \sim \mathcal{N}(0, \mathbf{Q})$$
+
+$$
+\mathbf{x}_k = \mathbf{F} \mathbf{x}_{k-1} + \mathbf{w}_k, \quad \mathbf{F} = \begin{bmatrix} 1 & 0 & \Delta t & 0 \\ 0 & 1 & 0 & \Delta t \\ 0 & 0 & 1 & 0 \\ 0 & 0 & 0 & 1 \end{bmatrix}, \quad \mathbf{w}_k \sim \mathcal{N}(0, \mathbf{Q})
+$$
 
 #### 2. Bước Dự đoán (Prediction)
+
 $$
-\begin{aligned}
-\mathbf{\hat{x}}_{k|k-1} &= \mathbf{F} \mathbf{\hat{x}}_{k-1|k-1} \\
-\mathbf{P}_{k|k-1} &= \mathbf{F} \mathbf{P}_{k-1|k-1} \mathbf{F}^T + \mathbf{Q}
-\end{aligned}
+\mathbf{\hat{x}}_{k|k-1} = \mathbf{F} \mathbf{\hat{x}}_{k-1|k-1}
+$$
+
+$$
+\mathbf{P}_{k|k-1} = \mathbf{F} \mathbf{P}_{k-1|k-1} \mathbf{F}^T + \mathbf{Q}
 $$
 
 #### 3. Bước Đo lường với Radar (Phi tuyến tính)
 Dữ liệu Radar trả về trong hệ tọa độ cực:
-$$\mathbf{z}_{radar} = \begin{bmatrix} \rho \\ \phi \\ \dot{\rho} \end{bmatrix} = h(\mathbf{x}) = \begin{bmatrix} \sqrt{p_x^2 + p_y^2} \\ \arctan(p_y / p_x) \\ \frac{p_x v_x + p_y v_y}{\sqrt{p_x^2 + p_y^2}} \end{bmatrix}$$
+
+$$
+\mathbf{z}_{radar} = \begin{bmatrix} \rho \\ \phi \\ \dot{\rho} \end{bmatrix} = h(\mathbf{x}) = \begin{bmatrix} \sqrt{p_x^2 + p_y^2} \\ \arctan(p_y / p_x) \\ \frac{p_x v_x + p_y v_y}{\sqrt{p_x^2 + p_y^2}} \end{bmatrix}
+$$
 
 Tuyến tính hóa hàm đo lường bằng ma trận Jacobian $\mathbf{H}_j$:
-$$\mathbf{H}_j = \frac{\partial h}{\partial \mathbf{x}} = \begin{bmatrix} 
+
+$$
+\mathbf{H}_j = \frac{\partial h}{\partial \mathbf{x}} = \begin{bmatrix} 
 \frac{p_x}{\rho} & \frac{p_y}{\rho} & 0 & 0 \\
 -\frac{p_y}{\rho^2} & \frac{p_x}{\rho^2} & 0 & 0 \\
 \frac{p_y(v_x p_y - v_y p_x)}{\rho^3} & \frac{p_x(v_y p_x - v_x p_y)}{\rho^3} & \frac{p_x}{\rho} & \frac{p_y}{\rho}
-\end{bmatrix}$$
+\end{bmatrix}
+$$
 
 #### 4. Cập nhật Trạng thái (Measurement Update)
+
 $$
-\begin{aligned}
-\mathbf{y} &= \mathbf{z} - h(\mathbf{\hat{x}}_{k|k-1}) \\
-\mathbf{S} &= \mathbf{H}_j \mathbf{P}_{k|k-1} \mathbf{H}_j^T + \mathbf{R} \\
-\mathbf{K} &= \mathbf{P}_{k|k-1} \mathbf{H}_j^T \mathbf{S}^{-1} \\
-\mathbf{\hat{x}}_{k|k} &= \mathbf{\hat{x}}_{k|k-1} + \mathbf{K} \mathbf{y} \\
-\mathbf{P}_{k|k} &= (\mathbf{I} - \mathbf{K} \mathbf{H}_j) \mathbf{P}_{k|k-1}
-\end{aligned}
+\mathbf{y} = \mathbf{z} - h(\mathbf{\hat{x}}_{k|k-1})
+$$
+
+$$
+\mathbf{S} = \mathbf{H}_j \mathbf{P}_{k|k-1} \mathbf{H}_j^T + \mathbf{R}
+$$
+
+$$
+\mathbf{K} = \mathbf{P}_{k|k-1} \mathbf{H}_j^T \mathbf{S}^{-1}
+$$
+
+$$
+\mathbf{\hat{x}}_{k|k} = \mathbf{\hat{x}}_{k|k-1} + \mathbf{K} \mathbf{y}
+$$
+
+$$
+\mathbf{P}_{k|k} = (\mathbf{I} - \mathbf{K} \mathbf{H}_j) \mathbf{P}_{k|k-1}
 $$
 
 ---

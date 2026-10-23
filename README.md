@@ -124,41 +124,151 @@ Tiêu chuẩn quốc tế **SAE J3016** phân chia tự hành ô tô từ Cấp 
 *   12 cảm biến siêu âm trên VF 8 / VF 9 được tối ưu hóa cho bài toán đỗ xe tự động (Automated Parking Assist - APA), quét chính xác mép bó vỉa, cột mốc, và khe hở giữa 2 phương tiện song song hoặc vuông góc.
 
 ### 2.4. Thuật toán Dung hợp Dữ liệu (Sensor Fusion & EKF)
-Hệ thống kết hợp dữ liệu giữa Camera (nhận diện vật thể, đo khoảng cách góc ngang tốt) và Radar (đo cự ly sâu và vận tốc tương đối chính xác).
+Hệ thống kết hợp dữ liệu giữa Camera (nhận diện vật thể, phân loại, đo khoảng cách góc ngang tốt) và Radar (đo cự ly xa và vận tốc tương đối Doppler chính xác).
 
+```mermaid
+flowchart LR
+    subgraph EarlyFusion["1. Early Fusion (Raw Level)"]
+        direction TB
+        RawCam["Raw Camera Pixels"]
+        RawRad["Radar Point Cloud"]
+        DNN["Deep Neural Network<br/>(PointPillars / BEVFormer)"]
+        BBox3D["3D Bounding Boxes"]
+        RawCam & RawRad --> DNN --> BBox3D
+    end
+
+    subgraph LateFusion["2. Late Fusion (Object Level - Chuẩn VinFast VF 8/9)"]
+        direction TB
+        CamDet["Camera Detection<br/>(BBox + Class)"]
+        RadClust["Radar Cluster<br/>(Range + Doppler Vel)"]
+        EKFTrack["Bộ lọc EKF & Hungarian<br/>(Tracking & Fusion)"]
+        UnifiedObj["Danh sách Vật thể Hợp nhất<br/>(Unified Object List)"]
+        CamDet & RadClust --> EKFTrack --> UnifiedObj
+    end
 ```
-Early Fusion (Raw Level):
-[Raw Camera Pixels] + [Radar Point Cloud] ===(Deep Neural Net)===> [3D Bounding Boxes]
 
-Late Fusion (Object Level - Standard trên VF 8/9):
-[Camera] ---> Detection Model  ---> [BBox + Object Class] --\
-                                                             +==>[EKF Tracker]==>[Unified Object]
-[Radar]  ---> Cluster / Filter ---> [Range + Doppler Vel] --/
+#### Quy trình & Công thức Toán học: Bộ lọc Kalman Mở rộng (EKF)
+
+Để theo vết (tracking) và dung hợp quỹ đạo vật thể phi tuyến tính, hệ thống triển khai chu trình lặp EKF 3 bước:
+
+```mermaid
+flowchart TD
+    subgraph SENSORS["DỮ LIỆU ĐO LƯỜNG TỪ CẢM BIẾN (MEASUREMENT)"]
+        CAM["Camera: Vị trí góc, BBox [x, y]"]
+        RAD["Radar: Cự ly r, Vận tốc Doppler v_r"]
+    end
+
+    subgraph STEP1["BƯỚC 1: DỰ ĐOÁN (PREDICTION)"]
+        direction TB
+        P1["Dự đoán trạng thái tương lai:<br/>x̂(k|k-1) = F · x̂(k-1|k-1)"]
+        P2["Dự đoán hiệp phương sai sai số:<br/>P(k|k-1) = F · P(k-1|k-1) · Fᵀ + Q"]
+        P1 --> P2
+    end
+
+    subgraph STEP2["BƯỚC 2: LIÊN KẾT DỮ LIỆU (DATA ASSOCIATION)"]
+        direction TB
+        DA["Thuật toán Hungarian<br/>Khớp cặp đối tượng Camera & Radar"]
+        RES["Tính sai số quan sát (Residual / Innovation):<br/>y(k) = z(k) - h(x̂(k|k-1))"]
+        DA --> RES
+    end
+
+    subgraph STEP3["BƯỚC 3: CẬP NHẬT TRẠNG THÁI (CORRECTION)"]
+        direction TB
+        KG["Tính Độ lợi Kalman Gain:<br/>K(k) = P(k|k-1) · Hᵀ · S(k)⁻¹"]
+        ST["Cập nhật trạng thái tối ưu:<br/>x̂(k|k) = x̂(k|k-1) + K(k) · y(k)"]
+        CV["Cập nhật ma trận hiệp phương sai:<br/>P(k|k) = (I - K(k) · H) · P(k|k-1)"]
+        KG --> ST --> CV
+    end
+
+    OUT["DANH SÁCH VẬT THỂ DUY NHẤT (TRACKED OBJECTS)<br/>[x, y, v_x, v_y, a_x, a_y] cung cấp cho ACC / AEB"]
+
+    CAM & RAD --> DA
+    P2 --> RES
+    RES --> KG
+    CV --> OUT
+    CV -.->|Chu kỳ tính toán tiếp theo k+1| P1
+
+    classDef sens fill:#e3f2fd,stroke:#1565c0,stroke-width:2px;
+    classDef step fill:#f3e5f5,stroke:#6a1b9a,stroke-width:2px;
+    classDef target fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px;
+    class CAM,RAD sens;
+    class P1,P2,DA,RES,KG,ST,CV step;
+    class OUT target;
 ```
 
-#### Mô hình Bộ lọc Kalman Mở rộng (Extended Kalman Filter - EKF)
+---
 
-*   **Vector trạng thái vật thể mục tiêu:**
-    $$\mathbf{x} = \begin{bmatrix} x & y & v_x & v_y & a_x & a_y \end{bmatrix}^T$$
+##### 1. Vector trạng thái vật thể mục tiêu
 
-*   **Mô hình chuyển động (State Transition):**
-    $$
-    \begin{aligned}
-    \mathbf{\hat{x}}_{k|k-1} &= \mathbf{F} \mathbf{\hat{x}}_{k-1|k-1} \\
-    \mathbf{P}_{k|k-1} &= \mathbf{F} \mathbf{P}_{k-1|k-1} \mathbf{F}^T + \mathbf{Q}
-    \end{aligned}
-    $$
+Hệ thống biểu diễn trạng thái của một phương tiện mục tiêu bằng vector 6 chiều trong hệ tọa độ xe (vị trí, vận tốc và gia tốc dọc/ngang):
 
-*   **Cập nhật đo lường (Measurement Update):**
-    $$
-    \begin{aligned}
-    \mathbf{y}_k &= \mathbf{z}_k - h(\mathbf{\hat{x}}_{k|k-1}) \\
-    \mathbf{S}_k &= \mathbf{H}_k \mathbf{P}_{k|k-1} \mathbf{H}_k^T + \mathbf{R} \\
-    \mathbf{K}_k &= \mathbf{P}_{k|k-1} \mathbf{H}_k^T \mathbf{S}_k^{-1} \\
-    \mathbf{\hat{x}}_{k|k} &= \mathbf{\hat{x}}_{k|k-1} + \mathbf{K}_k \mathbf{y}_k \\
-    \mathbf{P}_{k|k} &= (\mathbf{I} - \mathbf{K}_k \mathbf{H}_k) \mathbf{P}_{k|k-1}
-    \end{aligned}
-    $$
+$$
+\mathbf{x} = \begin{bmatrix} x & y & v_x & v_y & a_x & a_y \end{bmatrix}^T
+$$
+
+##### 2. Bước Dự đoán (State Transition & Prediction)
+
+Dự đoán vị trí và vận tốc ở chu kỳ thời gian $k$ dựa trên mô hình chuyển động động học từ thời điểm $k-1$:
+
+$$
+\mathbf{\hat{x}}_{k|k-1} = \mathbf{F} \mathbf{\hat{x}}_{k-1|k-1}
+$$
+
+Dự đoán độ bất định (ma trận hiệp phương sai sai số):
+
+$$
+\mathbf{P}_{k|k-1} = \mathbf{F} \mathbf{P}_{k-1|k-1} \mathbf{F}^T + \mathbf{Q}
+$$
+
+*Trong đó:* $\mathbf{F}$ là ma trận chuyển trạng thái động học, $\mathbf{Q}$ là ma trận hiệp phương sai nhiễu quá trình (Process Noise Covariance).
+
+##### 3. Bước Cập nhật Đo lường (Measurement Update)
+
+Khi có tín hiệu đo lường thực tế $\mathbf{z}_k$ từ Camera hoặc Radar (hàm đo lường $h(\mathbf{x})$ phi tuyến tính):
+
+* **Sai số đo lường (Measurement Residual / Innovation):**
+
+$$
+\mathbf{y}_k = \mathbf{z}_k - h(\mathbf{\hat{x}}_{k|k-1})
+$$
+
+* **Hiệp phương sai sai số đo lường:**
+
+$$
+\mathbf{S}_k = \mathbf{H}_k \mathbf{P}_{k|k-1} \mathbf{H}_k^T + \mathbf{R}
+$$
+
+* **Ma trận Hệ số khuếch đại Kalman (Kalman Gain):**
+
+$$
+\mathbf{K}_k = \mathbf{P}_{k|k-1} \mathbf{H}_k^T \mathbf{S}_k^{-1}
+$$
+
+* **Ước lượng trạng thái tối ưu sau cập nhật:**
+
+$$
+\mathbf{\hat{x}}_{k|k} = \mathbf{\hat{x}}_{k|k-1} + \mathbf{K}_k \mathbf{y}_k
+$$
+
+* **Cập nhật ma trận hiệp phương sai sai số:**
+
+$$
+\mathbf{P}_{k|k} = (\mathbf{I} - \mathbf{K}_k \mathbf{H}_k) \mathbf{P}_{k|k-1}
+$$
+
+*Trong đó:* $\mathbf{H}_k$ là ma trận Jacobian tuyến tính hóa của $h(\mathbf{x})$, $\mathbf{R}$ là ma trận hiệp phương sai nhiễu đo lường của cảm biến.
+
+| Ký hiệu | Ý nghĩa Kỹ thuật | Vai trò trong hệ thống ADAS |
+| :--- | :--- | :--- |
+| $\mathbf{x}$ | Vector trạng thái vật thể | Chứa tọa độ $[x, y]$, vận tốc $[v_x, v_y]$, gia tốc $[a_x, a_y]$ |
+| $\mathbf{F}$ | Ma trận chuyển trạng thái | Mô hình vật lý suy đoán vị trí xe mục tiêu theo chu kỳ lấy mẫu $\Delta t$ |
+| $\mathbf{Q}$ | Nhiễu quá trình (Process Noise) | Bù trừ sai số khi xe phía trước đột ngột đánh lái hoặc tăng ga |
+| $\mathbf{z}_k$ | Vector quan sát đo lường | Tín hiệu trả về từ Camera (pixel góc) hoặc Radar (cự ly, Doppler) |
+| $h(\mathbf{x})$ | Hàm đo lường phi tuyến tính | Chuyển đổi từ tọa độ Đề-các sang tọa độ cực của Radar |
+| $\mathbf{H}_k$ | Ma trận Jacobian | Tuyến tính hóa hàm phi tuyến $h(\mathbf{x})$ quanh điểm ước lượng |
+| $\mathbf{R}$ | Nhiễu đo lường (Sensor Noise) | Độ bất định vật lý của thấu kính camera hoặc tán xạ radar |
+| $\mathbf{K}_k$ | Độ lợi Kalman Gain | Trọng số quyết định tin tưởng mô hình chuyển động hay tin cảm biến hơn |
+| $\mathbf{P}_k$ | Ma trận hiệp phương sai sai số | Thể hiện mức độ tin cậy của thuật toán về vị trí vật thể |
 
 ---
 
