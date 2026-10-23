@@ -4,31 +4,18 @@
 
 ---
 
-## MỤC LỤC
-1. [Chương 1: Tổng Quan Kiến Trúc Hệ Thống & Tiêu Chuẩn Công Nghiệp](#chương-1-tổng-quan-kiến-trúc-hệ-thống--tiêu-chuẩn-công-nghiệp)
-   - 1.1. Phân cấp Cấp độ Tự hành SAE J3016 & Miền thiết kế Vận hành (ODD)
-   - 1.2. So sánh Kiến trúc Thực tế: Tesla vs. Mercedes-Benz vs. VinFast
-   - 1.3. An toàn Chức năng ISO 26262 & Tiêu chuẩn SOTIF (ISO 21448)
-2. [Chương 2: Tầng Cảm Biến (Sensing) & Dung Hợp Dữ Liệu (Sensor Fusion)](#chương-2-tầng-cảm-biến-sensing--dung-hợp-dữ-liệu-sensor-fusion)
-   - 2.1. Cảm biến Camera & Công nghệ Thị giác Máy tính
-   - 2.2. Radar Sóng Milimet (mmWave Radar 77GHz - 79GHz)
-   - 2.3. Cảm biến Siêu âm (Ultrasonic Sensors - USS)
-   - 2.4. Thuật toán Dung hợp Dữ liệu (Sensor Fusion & EKF)
-3. [Chương 3: Các Tính Năng ADAS Cốt Lõi & Thuật Toán Điều Khiển](#chương-3-các-tính-năng-adas-cốt-lõi--thuật-toán-điều-khiển)
-   - 3.1. Phanh Khẩn Cấp Tự Động (AEB) & Logic Tính toán TTC
-   - 3.2. Kiểm Soát Hành Trình Thích Ứng (ACC) & Bộ Điều khiển MPC
-   - 3.3. Hỗ Trợ Giữ Làn (LKA) / Định Tâm Làn (LCA) & Stanley Controller
-4. [Chương 4: Hệ Thống Giám Sát Khoang Lái (DMS / OMS) & Trải Nghiệm Người Dùng HMI](#chương-4-hệ-thống-giám-sát-khoang-lái-dms--oms--trải-nghiệm-người-dùng-hmi)
-   - 4.1. Hệ thống Giám sát Người lái (DMS) & Nhận diện Buồn ngủ / Mất tập trung
-   - 4.2. Dấu ấn Đột phá từ VinAI: MirrorSense & JellyView
-5. [Chương 5: Hạ Tầng Tính Toán & Mạng Truyền Thông Trên Xe (E/E Architecture)](#chương-5-hạ-tầng-tính-toán--mạng-truyền-thông-trên-xe-ee-architecture)
-   - 5.1. Chuyển dịch Kiến trúc Điện - Điện tử sang Domain Controller
-   - 5.2. Mạng Truyền thông: CAN-FD vs. Automotive Ethernet (SOME/IP)
-6. [Chương 6: Quy Trình Kiểm Thử (V-Model), Hiệu Chuẩn (Calibration) & Tiêu Chuẩn NCAP](#chương-6-quy-trình-kiểm-thử-v-model-hiệu-chuẩn-calibration--tiêu-chuẩn-ncap)
-   - 6.1. Chu trình Kiểm thử X-in-the-Loop (MIL, SIL, HIL, VIL)
-   - 6.2. Quy trình Cân chỉnh Cảm biến (Sensor Calibration) tại Nhà máy
-7. [Chương 7: Lộ Trình Thực Hành & Dự Án Mẫu (Capstone Projects)](#chương-7-lộ-trình-thực-hành--dự-án-mẫu-capstone-projects)
-8. [Trích Dẫn Tài Liệu Tham Khảo & Tuyên Bố Bản Quyền Sở Hữu Trí Tuệ](#trích-dẫn-tài-liệu-tham-khảo--tuyên-bố-bản-quyền-sở-hữu-trí-tuệ)
+## MỤC LỤC & TÀI LIỆU CHI TIẾT TỪNG CHƯƠNG
+
+| Chương | Tên Chuyên Đề Kỹ Thuật | Bản Chi Tiết Chuyên Sâu (Markdown) |
+| :--- | :--- | :--- |
+| **Chương 1** | Tổng Quan Kiến Trúc Hệ Thống & Tiêu Chuẩn Công Nghiệp | [Xem Chi Tiết Chương 1](./chapters/01_tong_quan_kien_truc_va_tieu_chuan.md) |
+| **Chương 2** | Tầng Cảm Biến (Sensing) & Dung Hợp Dữ Liệu (Sensor Fusion) | [Xem Chi Tiết Chương 2](./chapters/02_tang_cam_bien_va_dung_hop_du_lieu.md) |
+| **Chương 3** | Các Tính Năng ADAS Cốt Lõi & Thuật Toán Điều Khiển | [Xem Chi Tiết Chương 3](./chapters/03_tinh_nang_adas_va_thuat_toan_dieu_khien.md) |
+| **Chương 4** | Hệ Thống Giám Sát Khoang Lái (DMS/OMS) & Trải Nghiệm HMI | [Xem Chi Tiết Chương 4](./chapters/04_giam_sat_khoang_lai_dms_oms_hmi.md) |
+| **Chương 5** | Hạ Tầng Tính Toán & Mạng Truyền Thông Trên Xe (E/E Architecture) | [Xem Chi Tiết Chương 5](./chapters/05_ha_tang_tinh_toan_va_mang_truyen_thong.md) |
+| **Chương 6** | Quy Trình Kiểm Thử (V-Model), Hiệu Chuẩn & Tiêu Chuẩn NCAP | [Xem Chi Tiết Chương 6](./chapters/06_kiem_thu_hieu_chuan_va_tieu_chuan_ncap.md) |
+| **Chương 7** | Lộ Trình Thực Hành & Dự Án Mẫu (Capstone Projects) | [Xem Chi Tiết Chương 7](./chapters/07_lo_trinh_thuc_hanh_va_du_an_capstone.md) |
+| **Phụ lục** | Trích Dẫn Nguồn Học Thuật & Bản Quyền Sở Hữu Trí Tuệ | [Xem Chi Tiết Phụ Lục](#trích-dẫn-tài-liệu-tham-khảo--tuyên-bố-bản-quyền-sở-hữu-trí-tuệ) |
 
 ---
 
