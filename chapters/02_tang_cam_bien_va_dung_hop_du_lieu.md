@@ -130,8 +130,12 @@ Mô hình chuyển động vận tốc không đổi (Constant Velocity - CV):
 $$\mathbf{x}_k = \mathbf{F} \mathbf{x}_{k-1} + \mathbf{w}_k, \quad \mathbf{F} = \begin{bmatrix} 1 & 0 & \Delta t & 0 \\ 0 & 1 & 0 & \Delta t \\ 0 & 0 & 1 & 0 \\ 0 & 0 & 0 & 1 \end{bmatrix}, \quad \mathbf{w}_k \sim \mathcal{N}(0, \mathbf{Q})$$
 
 #### 2. Bước Dự đoán (Prediction)
-$$\mathbf{\hat{x}}_{k|k-1} = \mathbf{F} \mathbf{\hat{x}}_{k-1|k-1}$$
-$$\mathbf{P}_{k|k-1} = \mathbf{F} \mathbf{P}_{k-1|k-1} \mathbf{F}^T + \mathbf{Q}$$
+$$
+\begin{aligned}
+\mathbf{\hat{x}}_{k|k-1} &= \mathbf{F} \mathbf{\hat{x}}_{k-1|k-1} \\
+\mathbf{P}_{k|k-1} &= \mathbf{F} \mathbf{P}_{k-1|k-1} \mathbf{F}^T + \mathbf{Q}
+\end{aligned}
+$$
 
 #### 3. Bước Đo lường với Radar (Phi tuyến tính)
 Dữ liệu Radar trả về trong hệ tọa độ cực:
@@ -145,11 +149,15 @@ $$\mathbf{H}_j = \frac{\partial h}{\partial \mathbf{x}} = \begin{bmatrix}
 \end{bmatrix}$$
 
 #### 4. Cập nhật Trạng thái (Measurement Update)
-$$\mathbf{y} = \mathbf{z} - h(\mathbf{\hat{x}}_{k|k-1})$$
-$$\mathbf{S} = \mathbf{H}_j \mathbf{P}_{k|k-1} \mathbf{H}_j^T + \mathbf{R}$$
-$$\mathbf{K} = \mathbf{P}_{k|k-1} \mathbf{H}_j^T \mathbf{S}^{-1}$$
-$$\mathbf{\hat{x}}_{k|k} = \mathbf{\hat{x}}_{k|k-1} + \mathbf{K} \mathbf{y}$$
-$$\mathbf{P}_{k|k} = (\mathbf{I} - \mathbf{K} \mathbf{H}_j) \mathbf{P}_{k|k-1}$$
+$$
+\begin{aligned}
+\mathbf{y} &= \mathbf{z} - h(\mathbf{\hat{x}}_{k|k-1}) \\
+\mathbf{S} &= \mathbf{H}_j \mathbf{P}_{k|k-1} \mathbf{H}_j^T + \mathbf{R} \\
+\mathbf{K} &= \mathbf{P}_{k|k-1} \mathbf{H}_j^T \mathbf{S}^{-1} \\
+\mathbf{\hat{x}}_{k|k} &= \mathbf{\hat{x}}_{k|k-1} + \mathbf{K} \mathbf{y} \\
+\mathbf{P}_{k|k} &= (\mathbf{I} - \mathbf{K} \mathbf{H}_j) \mathbf{P}_{k|k-1}
+\end{aligned}
+$$
 
 ---
 

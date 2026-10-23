@@ -137,16 +137,28 @@ Late Fusion (Object Level - Standard trên VF 8/9):
 ```
 
 #### Mô hình Bộ lọc Kalman Mở rộng (Extended Kalman Filter - EKF)
-*   **Vector trạng thái vật thể mục tiêu:** $\mathbf{x} = [x, y, v_x, v_y, a_x, a_y]^T$
+
+*   **Vector trạng thái vật thể mục tiêu:**
+    $$\mathbf{x} = \begin{bmatrix} x & y & v_x & v_y & a_x & a_y \end{bmatrix}^T$$
+
 *   **Mô hình chuyển động (State Transition):**
-    $$\mathbf{\hat{x}}_{k|k-1} = \mathbf{F}\mathbf{\hat{x}}_{k-1|k-1}$$
-    $$\mathbf{P}_{k|k-1} = \mathbf{F}\mathbf{P}_{k-1|k-1}\mathbf{F}^T + \mathbf{Q}$$
+    $$
+    \begin{aligned}
+    \mathbf{\hat{x}}_{k|k-1} &= \mathbf{F} \mathbf{\hat{x}}_{k-1|k-1} \\
+    \mathbf{P}_{k|k-1} &= \mathbf{F} \mathbf{P}_{k-1|k-1} \mathbf{F}^T + \mathbf{Q}
+    \end{aligned}
+    $$
+
 *   **Cập nhật đo lường (Measurement Update):**
-    $$\mathbf{y}_k = \mathbf{z}_k - h(\mathbf{\hat{x}}_{k|k-1})$$
-    $$\mathbf{S}_k = \mathbf{H}_k \mathbf{P}_{k|k-1} \mathbf{H}_k^T + \mathbf{R}$$
-    $$\mathbf{K}_k = \mathbf{P}_{k|k-1} \mathbf{H}_k^T \mathbf{S}_k^{-1}$$
-    $$\mathbf{\hat{x}}_{k|k} = \mathbf{\hat{x}}_{k|k-1} + \mathbf{K}_k \mathbf{y}_k$$
-    $$\mathbf{P}_{k|k} = (\mathbf{I} - \mathbf{K}_k \mathbf{H}_k)\mathbf{P}_{k|k-1}$$
+    $$
+    \begin{aligned}
+    \mathbf{y}_k &= \mathbf{z}_k - h(\mathbf{\hat{x}}_{k|k-1}) \\
+    \mathbf{S}_k &= \mathbf{H}_k \mathbf{P}_{k|k-1} \mathbf{H}_k^T + \mathbf{R} \\
+    \mathbf{K}_k &= \mathbf{P}_{k|k-1} \mathbf{H}_k^T \mathbf{S}_k^{-1} \\
+    \mathbf{\hat{x}}_{k|k} &= \mathbf{\hat{x}}_{k|k-1} + \mathbf{K}_k \mathbf{y}_k \\
+    \mathbf{P}_{k|k} &= (\mathbf{I} - \mathbf{K}_k \mathbf{H}_k) \mathbf{P}_{k|k-1}
+    \end{aligned}
+    $$
 
 ---
 
