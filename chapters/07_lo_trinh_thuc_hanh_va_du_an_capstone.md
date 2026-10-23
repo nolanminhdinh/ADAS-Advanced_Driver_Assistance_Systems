@@ -201,13 +201,13 @@ cv2.destroyAllWindows()
 
 ---
 
-## 5. HƯỚNG DẪN ÔN TẬP PHỎNG VẤN VÀ ĐỊNH HƯỚNG SỰ NGHIỆP TẠI VINFAST / VINAI
+## 5. BỐN TRỤ CỘT NĂNG LỰC CỐT LÕI CỦA KỸ SƯ ADAS CHUYÊN NGHIỆP
 
-Khi ứng tuyển vào các vị trí **ADAS Algorithm Engineer**, **ADAS System Validation**, hoặc **Autonomous Vehicle Control Specialist** tại VinFast, bạn sẽ thường được phỏng vấn qua 4 trụ cột kỹ thuật:
+Để làm chủ toàn diện các chuyên ngành kỹ thuật ADAS (Phát triển Giải thuật, Thẩm định Hệ thống, Tích hợp Phần mềm nhúng), một kỹ sư cần rèn luyện vững chắc 4 trụ cột kiến thức chuyên môn:
 
 ```
 +---------------------------------------------------------------------------------------------------------+
-|                                    4 TRỤ CỘT PHỎNG VẤN KỸ THUẬT ADAS VINFAST                            |
+|                                    4 TRỤ CỘT NĂNG LỰC KỸ THUẬT ADAS TIÊU CHUẨN                          |
 +--------------------------+------------------------------------------------------------------------------+
 | 1. Tư duy Toán học       | Giải thích chi tiết sự khác nhau giữa EKF và UKF; Cách thiết lập hàm mục tiêu|
 | & Điều khiển Tự động     | trong MPC; Chứng minh tính ổn định của thuật toán Stanley.                   |
