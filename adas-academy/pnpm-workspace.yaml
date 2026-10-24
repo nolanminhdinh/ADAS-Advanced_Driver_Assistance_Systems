@@ -1,0 +1,6 @@
+packages:
+  - '.'
+storeDir: .sites-runtime/pnpm-store
+nodeLinker: hoisted
+allowBuilds:
+  esbuild: true

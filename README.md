@@ -4,6 +4,14 @@
 
 ---
 
+## WEBSITE HỌC ADAS
+
+- **Truy cập bản riêng tư:** [ADAS Academy](https://adas-academy-minh.deepseal35.chatgpt.site) — đăng nhập bằng tài khoản ChatGPT được cấp quyền.
+- **Mã nguồn và hướng dẫn chạy:** [adas-academy/README.md](./adas-academy/README.md).
+- Website gồm 8 chương, 39 bài học, 16 câu hỏi ôn tập, ghi chú cá nhân và mô hình TTC tương tác. Tiến độ và ghi chú được lưu trên trình duyệt hiện tại.
+
+---
+
 ## MỤC LỤC & TÀI LIỆU CHI TIẾT TỪNG CHƯƠNG
 
 | Chương | Tên Chuyên Đề Kỹ Thuật | Bản Chi Tiết Chuyên Sâu (Markdown) |
