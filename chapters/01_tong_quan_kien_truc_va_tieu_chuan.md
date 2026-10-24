@@ -116,6 +116,10 @@ $$\text{ASIL} = f(S, E, C) \in \{\text{QM}, \text{ASIL-A}, \text{ASIL-B}, \text{
 ```
 *(QM: Quality Management - Quy trình quản lý chất lượng thông thường, không cần tiêu chuẩn an toàn đặc biệt).*
 
+> [!TIP]
+> **Tài liệu Giải thích Chi tiết:** Để hiểu sâu về bản chất của bảng ma trận này, cách tra cứu 3 tham số $S, E, C$, bảng ma trận đầy đủ cho $S1, S2, S3$, cùng các ví dụ thực chiến trong kiểm thử hệ thống ADAS, xem bài giải thích chi tiết tại:  
+> 🔗 **[Chuyên đề Giải thích Ma trận ASIL (ISO 26262)](../explanations/chuong_01/ma_tran_asil_iso26262.md)**
+
 * **Ứng dụng trên xe VinFast:**
   - Chức năng Phanh khẩn cấp tự động (AEB) và Trợ lực lái điện (EPS) được phân loại là **ASIL-D**.
   - Nếu hệ thống tự ý đánh lái ngoặt ở tốc độ $120\text{ km/h}$ trên cao tốc Hà Nội - Hải Phòng ($S3, E4, C3$), nguy cơ tử vong là tối đa. Do đó, phần mềm điều khiển lái trên VinFast bắt buộc phải triển khai cơ chế kiểm tra chéo (Cross-check) độc lập giữa vi xử lý chính và chip vi điều khiển an toàn (Safety Watchdog).
