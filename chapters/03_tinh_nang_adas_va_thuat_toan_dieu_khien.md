@@ -29,10 +29,12 @@ flowchart LR
         ESP["Hệ thống Phanh Điện tử (ESP / iBooster)<br/>Áp suất dầu phanh (a_req < 0)"]
     end
 
-    VSET & DIST & VLEAD --> ALGO
+    VSET --> ALGO
+    DIST --> ALGO
+    VLEAD --> ALGO
     AREQ --> CHECK
-    CHECK -->|a_req > 0 (Tăng tốc)| VCU
-    CHECK -->|a_req < 0 (Phanh giảm tốc)| ESP
+    CHECK -->|Gia tốc dương: Tăng tốc| VCU
+    CHECK -->|Gia tốc âm: Phanh giảm tốc| ESP
 
     classDef in fill:#e1f5fe,stroke:#0288d1,stroke-width:2px;
     classDef ctrl fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px;
@@ -98,11 +100,11 @@ Hệ thống AEB trên VinFast VF 8 phân chia quy trình can thiệp theo 4 gia
 stateDiagram-v2
     [*] --> Safe : Khởi động hệ thống
     Safe --> FCW : TTC <= 2.8s
-    FCW --> Safe : Lái xe đánh lái / Phanh / TTC > 2.8s
+    FCW --> Safe : Lái xe can thiệp hoặc TTC > 2.8s
     FCW --> Brake_Prefill : TTC <= 1.8s
     Brake_Prefill --> Safe : Nguy cơ đã qua
     Brake_Prefill --> Full_AEB : TTC <= 1.2s
-    Full_AEB --> Stopped : Xe dừng hẳn an toàn (v = 0)
+    Full_AEB --> Stopped : Xe dừng hẳn an toàn
     Stopped --> [*] : Giữ phanh an toàn 2s sau dừng
 ```
 
@@ -199,8 +201,8 @@ flowchart TD
         FW["Bánh trước (Front Wheel)<br/>Góc lái: δ"]
         CG["Trọng tâm xe (CG)<br/>Vận tốc: v, Góc trượt: β"]
         RW["Bánh sau (Rear Wheel)<br/>Tâm quay tức thời: ICR"]
-        FW --- |"Khoảng cách l_f"| CG
-        CG --- |"Khoảng cách l_r"| RW
+        FW ---|Khoảng cách l_f| CG
+        CG ---|Khoảng cách l_r| RW
     end
 ```
 
@@ -253,7 +255,11 @@ flowchart TD
         ERR_PSI["Sai số góc hướng đầu xe: θ_e"]
         CALC["Công thức Stanley:<br/>δ(t) = θ_e(t) + arctan(k · e_y / (v + ε))"]
         EPS_ACT["Mô-tơ trợ lực lái điện (EPS)"]
-        LANE --> ERR_Y & ERR_PSI --> CALC --> EPS_ACT
+        LANE --> ERR_Y
+        LANE --> ERR_PSI
+        ERR_Y --> CALC
+        ERR_PSI --> CALC
+        CALC --> EPS_ACT
     end
 ```
 
