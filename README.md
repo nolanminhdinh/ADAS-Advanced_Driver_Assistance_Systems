@@ -285,42 +285,67 @@ $$
 ## CHƯƠNG 3: CÁC TÍNH NĂNG ADAS CỐT LÕI & THUẬT TOÁN ĐIỀU KHIỂN
 
 ### 3.1. Phanh Khẩn Cấp Tự Động (AEB) & Logic Tính toán TTC
-*   **Chỉ số Thời gian tới Va chạm (Time-to-Collision - TTC):**
-    $$\text{TTC} = \frac{d_{relative}}{-v_{relative}} = \frac{x_{lead} - x_{ego}}{v_{ego} - v_{lead}} \quad (\text{với } v_{ego} > v_{lead})$$
-*   **Phân tầng Cảnh báo & Can thiệp:**
-    1.  $\text{TTC} > 3.0\text{s}$: Trạng thái bình thường.
-    2.  $2.0\text{s} < \text{TTC} \le 3.0\text{s}$: Kích hoạt Cảnh báo va chạm phía trước (FCW) qua âm thanh và hình ảnh HUD.
-    3.  $1.5\text{s} < \text{TTC} \le 2.0\text{s}$: Tiền phanh (*Brake Jerk*), ép nhẹ áp suất dầu phanh.
-    4.  $\text{TTC} \le 1.2\text{s}$: Can thiệp phanh khẩn cấp cấp độ tối đa ($a \approx -1.0g$).
 
-*Kỹ thuật trên xe VinFast:* Do môi trường giao thông Việt Nam có mật độ xe máy tạt đầu (Cut-in) rất cao, thuật toán AEB trên xe VinFast được tinh chỉnh bổ sung các ngưỡng gia tốc ngang (Lateral velocity threshold) để phân biệt giữa tình huống xe máy chỉ cắt ngang thoáng qua và tình huống thực sự có nguy cơ đâm va trực diện.
+Chỉ số Thời gian tới Va chạm (**Time-to-Collision - TTC**) quyết định các cấp độ cảnh báo FCW và phanh khẩn cấp AEB:
+
+* **Trường hợp vận tốc tương đối không đổi:**
+
+$$
+\text{TTC} = \frac{d_{rel}}{-v_{rel}} = \frac{x_{lead} - x_{ego}}{v_{ego} - v_{lead}} \quad (v_{ego} > v_{lead})
+$$
+
+* **Trường hợp xe trước phanh gấp (Gia tốc tương đối $a_{rel} < 0$):**
+
+$$
+\text{TTC}_{accel} = \frac{-v_{rel} - \sqrt{v_{rel}^2 - 2 a_{rel} d_{rel}}}{a_{rel}}
+$$
+
+*(Trong đó: $d_{rel}$ là khoảng cách tương đối giữa hai xe; $v_{rel}$ là vận tốc tương đối; $a_{rel}$ là gia tốc tương đối).*
+
+##### Phân tầng Cảnh báo & Can thiệp:
+1. $\text{TTC} > 2.8\text{s}$: Trạng thái bình thường (Safe).
+2. $1.8\text{s} < \text{TTC} \le 2.8\text{s}$: Cảnh báo va chạm phía trước (FCW) qua âm thanh và hình ảnh HUD.
+3. $1.2\text{s} < \text{TTC} \le 1.8\text{s}$: Tiền phanh (*Brake Prefill / Brake Jerk*), ép nhẹ áp suất dầu phanh $2 - 5\text{ bar}$.
+4. $\text{TTC} \le 1.2\text{s}$: Can thiệp phanh khẩn cấp cấp độ tối đa ($a \approx -9.8\text{ m/s}^2 \approx -1.0g$).
+
+*Kỹ thuật trên xe VinFast:* Do môi trường giao thông Việt Nam có mật độ xe máy tạt đầu (Cut-in) rất cao, thuật toán AEB trên xe VinFast được tinh chỉnh bổ sung các mô hình phân loại quỹ đạo từ VinAI để phân biệt giữa tình huống xe máy chỉ cắt ngang thoáng qua và tình huống thực sự có nguy cơ đâm va trực diện.
 
 ---
 
 ### 3.2. Kiểm Soát Hành Trình Thích Ứng (ACC) & Bộ Điều khiển MPC
-*   Khoảng cách mục tiêu biến thiên theo vận tốc:
-    $$d_{target} = d_0 + \tau_{gap} \cdot v_{ego}$$
-*   **Bộ điều khiển Dự báo Mô hình (MPC - Model Predictive Control):**
-    Khác với bộ điều khiển PID thuần túy dễ gây giật, MPC giải bài toán tối ưu hóa đa mục tiêu trong dải dự báo $N_p$:
-    $$\min_{\Delta u} \sum_{k=1}^{N_p} \left[ w_d \cdot (d(t+k) - d_{target})^2 + w_v \cdot (v(t+k) - v_{target})^2 + w_j \cdot (\text{Jerk}(t+k))^2 \right]$$
-    Giúp chiếc xe VinFast tăng/giảm tốc êm ái, mang lại trải nghiệm tiện nghi chuẩn xe hạng sang.
+
+Khoảng cách mục tiêu biến thiên theo vận tốc:
+
+$$
+d_{des}(t) = d_0 + \tau \cdot v(t)
+$$
+
+##### Bộ điều khiển Dự báo Mô hình (MPC - Model Predictive Control):
+Khác với bộ điều khiển PID thuần túy dễ gây giật, MPC giải bài toán tối ưu hóa đa mục tiêu trong chân trời dự báo $N_p$:
+
+$$
+\min_{\Delta u} J = \sum_{k=1}^{N_p} \left[ w_d \cdot (d(t+k) - d_{des}(t+k))^2 + w_v \cdot (v(t+k) - v_{set})^2 + w_a \cdot a(t+k)^2 + w_j \cdot (\text{Jerk}(t+k))^2 \right]
+$$
+
+Giúp xe điện VinFast tăng/giảm tốc êm ái, tối ưu hóa năng lượng pin và mang lại trải nghiệm tiện nghi chuẩn xe hạng sang.
 
 ---
 
 ### 3.3. Hỗ Trợ Giữ Làn (LKA) / Định Tâm Làn (LCA) & Stanley Controller
-*   **Thuật toán Stanley (Stanley Controller):**
-    Điều khiển góc lái bánh trước $\delta(t)$ dựa trên sai số khoảng cách ngang $e_y$ và sai số góc hướng $\theta_e$:
-    $$\delta(t) = \theta_e(t) + \arctan\left(\frac{k \cdot e_y(t)}{v(t) + \epsilon}\right)$$
 
-```
-                           Làn đường mong muốn (Path)
-         --------------------------------------------------
-                             / | 
-                            /  | e_y (Sai số dịch chuyển ngang)
-                           /   |
-               \theta_e   /    v
-               (Góc lệch)/___ [Xe EGO] ===> Vận tốc v(t)
-                        /
+Thuật toán Stanley điều khiển góc lái bánh trước $\delta(t)$ dựa trên sai số khoảng cách lệch tâm ngang $e_y(t)$ và sai số góc hướng $\theta_e(t)$:
+
+$$
+\delta(t) = \theta_e(t) + \arctan\left(\frac{k \cdot e_y(t)}{v(t) + \epsilon}\right)
+$$
+
+```mermaid
+flowchart LR
+    LANE["Đường tâm làn (Target Lane Center)"]
+    ERR["Sai số vị trí e_y & Sai số góc θ_e"]
+    STANLEY_ALGO["Thuật toán Stanley:<br/>δ(t) = θ_e + arctan(k · e_y / (v + ε))"]
+    EPS_ACT["Mô-tơ trợ lực lái điện (EPS)"]
+    LANE --> ERR --> STANLEY_ALGO --> EPS_ACT
 ```
 
 *Ứng dụng trên xe VinFast:* Tín hiệu góc lái $\delta$ được gửi qua mạng CAN-FD tốc độ cao tới hộp trợ lực lái điện (EPS). Hệ thống kiểm soát mượt mà cả trên cung đường thẳng lẫn khúc cua có bán kính cong lớn trên đường cao tốc.
