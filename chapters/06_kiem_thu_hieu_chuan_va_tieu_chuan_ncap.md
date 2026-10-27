@@ -52,12 +52,31 @@ Một chiếc xe có thuật toán AI hoàn hảo vẫn sẽ đâm va nếu cả
 ```
 
 ### 2.1. Ma trận Hiệu chuẩn Tham số Ngoài (Extrinsic Calibration)
+
 Chuyển đổi tọa độ từ hệ quy chiếu cảm biến (Sensor Frame $\{S\}$) về hệ quy chiếu thân xe (Vehicle Frame $\{V\}$):
 
-$$\mathbf{P}_v = \mathbf{R}_{v\_s} \mathbf{P}_s + \mathbf{t}_{v\_s}$$
+$$
+\mathbf{P}_v = \mathbf{R}_{vs} \mathbf{P}_s + \mathbf{t}_{vs}
+$$
 
-Trong đó ma trận xoay $\mathbf{R}_{v\_s}$ được xác định bởi 3 góc Euler: **Roll ($\phi$), Pitch ($\theta$), Yaw ($\psi$)**:
-$$\mathbf{R}_{v\_s} = \mathbf{R}_z(\psi) \mathbf{R}_y(\theta) \mathbf{R}_x(\phi)$$
+Trong đó ma trận xoay $\mathbf{R}_{vs}$ được xác định bởi 3 góc Euler: **Roll ($\phi$), Pitch ($\theta$), Yaw ($\psi$)**:
+
+$$
+\mathbf{R}_{vs} = \mathbf{R}_z(\psi) \mathbf{R}_y(\theta) \mathbf{R}_x(\phi)
+$$
+
+##### Bảng Giải thích Chi tiết Các Đại lượng trong Hiệu chuẩn Ma trận Ngoại:
+
+| Ký hiệu | Tên gọi Kỹ thuật | Đơn vị | Ý nghĩa & Vai trò trong Hiệu chuẩn Hệ thống |
+| :--- | :--- | :--- | :--- |
+| $\mathbf{P}_v = [X_v, Y_v, Z_v]^T$ | Tọa độ điểm trong hệ quy chiếu thân xe | $\text{m}$ (mét) | Tọa độ chuẩn của chướng ngại vật/vạch kẻ đường trong hệ trục gốc xe (gốc tại tâm trục sau hoặc trọng tâm xe). |
+| $\mathbf{P}_s = [X_s, Y_s, Z_s]^T$ | Tọa độ điểm trong hệ quy chiếu cảm biến | $\text{m}$ (mét) | Tọa độ do cảm biến (Camera/Radar/LiDAR) trực tiếp đo được trong hệ trục cục bộ của chính cảm biến đó. |
+| $\mathbf{R}_{vs}$ | Ma trận xoay ngoại (Extrinsic Rotation Matrix) | - | Ma trận trực giao kích thước $3 \times 3$ bù trừ sai lệch góc lắp đặt cảm biến so với khung thân xe. |
+| $\mathbf{t}_{vs} = [t_x, t_y, t_z]^T$ | Vector tịnh tiến ngoại (Translation Vector) | $\text{m}$ (mét) | Khoảng cách không gian 3 chiều từ gốc tọa độ thân xe tới vị trí lắp đặt thực tế của cảm biến. |
+| $\phi$ (Roll) | Góc nghiêng ngang thân xe | $\text{rad}$ (hoặc độ) | Góc xoay quanh trục dọc X (lệch nghiêng trái/phải do giảm xóc hoặc mặt đường nghiêng). |
+| $\theta$ (Pitch) | Góc chúc/ngửa mũi xe | $\text{rad}$ (hoặc độ) | Góc xoay quanh trục ngang Y (lệch chúc xuống/ngửa lên do tải trọng hành lý phía sau hoặc phanh giật). |
+| $\psi$ (Yaw) | Góc xoay hướng đầu xe | $\text{rad}$ (hoặc độ) | Góc xoay quanh trục đứng Z (lệch chĩa sang trái/phải so với trục dọc đối xứng của xe). |
+| $\mathbf{R}_x, \mathbf{R}_y, \mathbf{R}_z$ | Các ma trận xoay cơ bản | - | Ma trận quay chuẩn Euler theo thứ tự xoay $Z \rightarrow Y \rightarrow X$ (Yaw-Pitch-Roll). |
 
 ---
 

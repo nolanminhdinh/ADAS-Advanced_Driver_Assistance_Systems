@@ -9,12 +9,45 @@ Camera là cảm biến duy nhất cung cấp dữ liệu hình ảnh với mậ
 ### 1.1. Mô hình Toán học Pin-hole & Khử Biến dạng Ống kính
 Mỗi điểm trong không gian thực 3D $\mathbf{P}_w = [X_w, Y_w, Z_w]^T$ được ánh xạ lên mặt phẳng cảm biến 2D $[u, v]^T$ qua ma trận tham số nội (Intrinsic Matrix $\mathbf{K}$) và ma trận ngoại (Extrinsic Matrix $[\mathbf{R} | \mathbf{t}]$):
 
-$$s \begin{bmatrix} u \\ v \\ 1 \end{bmatrix} = \mathbf{K} \begin{bmatrix} \mathbf{R} & \mathbf{t} \end{bmatrix} \begin{bmatrix} X_w \\ Y_w \\ Z_w \\ 1 \end{bmatrix} = \begin{bmatrix} f_x & 0 & c_x \\ 0 & f_y & c_y \\ 0 & 0 & 1 \end{bmatrix} \begin{bmatrix} r_{11} & r_{12} & r_{13} & t_x \\ r_{21} & r_{22} & r_{23} & t_y \\ r_{31} & r_{32} & r_{33} & t_z \end{bmatrix} \begin{bmatrix} X_w \\ Y_w \\ Z_w \\ 1 \end{bmatrix}$$
+$$
+s \begin{bmatrix} u \\ v \\ 1 \end{bmatrix} = \mathbf{K} \begin{bmatrix} \mathbf{R} & \mathbf{t} \end{bmatrix} \begin{bmatrix} X_w \\ Y_w \\ Z_w \\ 1 \end{bmatrix} = \begin{bmatrix} f_x & 0 & c_x \\ 0 & f_y & c_y \\ 0 & 0 & 1 \end{bmatrix} \begin{bmatrix} r_{11} & r_{12} & r_{13} & t_x \\ r_{21} & r_{22} & r_{23} & t_y \\ r_{31} & r_{32} & r_{33} & t_z \end{bmatrix} \begin{bmatrix} X_w \\ Y_w \\ Z_w \\ 1 \end{bmatrix}
+$$
+
+##### Bảng Giải thích Chi tiết Các Đại lượng trong Mô hình Camera Pinhole:
+
+| Ký hiệu | Tên gọi Kỹ thuật | Đơn vị | Ý nghĩa & Vai trò trong Nhận thức Camera |
+| :--- | :--- | :--- | :--- |
+| $[u, v]^T$ | Tọa độ điểm ảnh (Pixel coordinates) | $\text{pixel}$ | Tọa độ vị trí của điểm chiếu trên ảnh 2D (gốc tại góc trên bên trái ảnh). |
+| $s$ | Hệ số tỷ lệ tỉ xích (Scale factor) | - | Hệ số tỉ lệ độ sâu của điểm trong hệ quy chiếu camera ($s = Z_c$). |
+| $\mathbf{K}$ | Ma trận tham số nội (Intrinsic Matrix) | - | Ma trận $3 \times 3$ chứa đặc tính quang học vật lý bên trong cụm thấu kính camera. |
+| $f_x, f_y$ | Tiêu cự theo trục x và y (Focal lengths) | $\text{pixel}$ | Độ dài tiêu cự quy đổi ra kích thước pixel: $f_x = f \cdot m_x, f_y = f \cdot m_y$. |
+| $c_x, c_y$ | Điểm chính quang học (Principal point) | $\text{pixel}$ | Tọa độ giao điểm giữa trục quang học của thấu kính và mặt phẳng cảm biến CMOS. |
+| $\mathbf{R}$ | Ma trận xoay ngoại (Rotation Matrix) | - | Ma trận $3 \times 3$ xác định góc định hướng của camera so với hệ tọa độ thế giới/thân xe. |
+| $\mathbf{t} = [t_x, t_y, t_z]^T$ | Vector tịnh tiến ngoại (Translation Vector) | $\text{m}$ (mét) | Vị trí đặt camera trong không gian 3D thế giới thực. |
+| $[X_w, Y_w, Z_w]^T$ | Tọa độ 3D thế giới (World coordinates) | $\text{m}$ (mét) | Tọa độ thực tế của chướng ngại vật/vạch kẻ đường trong không gian 3D. |
+
+---
 
 * **Hiện tượng biến dạng quang học (Distortion):** 
   Do ống kính góc rộng (đặc biệt là 4 camera mắt cá 360 của VinFast), ảnh bị méo xuyên tâm (Radial distortion) và méo tiếp tuyến (Tangential distortion):
-  $$x_{corrected} = x(1 + k_1 r^2 + k_2 r^4 + k_3 r^6) + [2p_1 xy + p_2(r^2 + 2x^2)]$$
-  $$y_{corrected} = y(1 + k_1 r^2 + k_2 r^4 + k_3 r^6) + [p_1(r^2 + 2y^2) + 2p_2 xy]$$
+
+$$
+x_{corrected} = x(1 + k_1 r^2 + k_2 r^4 + k_3 r^6) + [2p_1 xy + p_2(r^2 + 2x^2)]
+$$
+
+$$
+y_{corrected} = y(1 + k_1 r^2 + k_2 r^4 + k_3 r^6) + [p_1(r^2 + 2y^2) + 2p_2 xy]
+$$
+
+##### Bảng Giải thích Chi tiết Các Tham số Khử Méo Ống Kính:
+
+| Ký hiệu | Tên gọi Kỹ thuật | Đơn vị | Ý nghĩa Hình học Khử Méo Ống Kính |
+| :--- | :--- | :--- | :--- |
+| $x, y$ | Tọa độ chuẩn hóa trước khử méo | - | Tọa độ điểm trên mặt phẳng ảnh chuẩn hóa: $x = X_c / Z_c, y = Y_c / Z_c$. |
+| $r$ | Bán kính quang học | - | Khoảng cách từ điểm đang xét tới tâm quang học: $r = \sqrt{x^2 + y^2}$. |
+| $k_1, k_2, k_3$ | Hệ số méo xuyên tâm (Radial distortion) | - | Bù trừ hiện tượng cong hình cánh cung do thấu kính cong (méo thùng - barrel distortion). |
+| $p_1, p_2$ | Hệ số méo tiếp tuyến (Tangential distortion) | - | Bù trừ sai số khi thấu kính không được lắp song song tuyệt đối với bề mặt cảm biến CMOS. |
+| $x_{corrected}, y_{corrected}$ | Tọa độ chuẩn hóa sau khử méo | - | Tọa độ lý tưởng dùng để tái tạo không gian 3D chính xác không còn bị cong vênh vạch kẻ. |
 
 ---
 
@@ -55,17 +88,56 @@ f_min  |    /   |   /   |   /   |
 ```
 
 ### 2.1. Đo Khoảng cách (Range) & Phân giải Khoảng cách ($\Delta R$)
-* Khoảng cách đến mục tiêu tỉ lệ thuận với tần số phách (Beat Frequency $f_b$):
-  $$d = \frac{c \cdot T_c \cdot f_b}{2 B}$$
-  *(Trong đó $c$ là tốc độ ánh sáng $3 \times 10^8\text{ m/s}$, $B$ là băng thông chirp, $T_c$ là chu kỳ chirp).*
-* **Độ phân giải cự ly tối thiểu:**
-  $$\Delta R = \frac{c}{2B}$$
-  *Ví dụ:* Với Radar băng thông rộng $B = 4\text{ GHz}$ (dải tần $77 - 81\text{ GHz}$), độ phân giải đạt tới:
-  $$\Delta R = \frac{3 \times 10^8}{2 \times 4 \times 10^9} = 0.0375\text{ m} = 3.75\text{ cm}$$
+
+Khoảng cách đến mục tiêu tỉ lệ thuận với tần số phách (Beat Frequency $f_b$) thu được sau khi trộn tín hiệu phát và thu:
+
+$$
+d = \frac{c \cdot T_c \cdot f_b}{2 B}
+$$
+
+Độ phân giải cự ly tối thiểu (khoảng cách cự ly gần nhất để Radar tách bạch 2 mục tiêu cạnh nhau):
+
+$$
+\Delta R = \frac{c}{2B}
+$$
+
+*Ví dụ:* Với Radar băng thông rộng $B = 4\text{ GHz}$ (dải tần ô tô $77 - 81\text{ GHz}$):
+
+$$
+\Delta R = \frac{3 \times 10^8}{2 \times 4 \times 10^9} = 0.0375\text{ m} = 3.75\text{ cm}
+$$
+
+##### Bảng Giải thích Chi tiết Các Đại lượng trong Đo Khoảng cách FMCW Radar:
+
+| Ký hiệu | Tên gọi Kỹ thuật | Đơn vị | Ý nghĩa & Giá trị Tiêu chuẩn trên Xe |
+| :--- | :--- | :--- | :--- |
+| $d$ | Khoảng cách tới mục tiêu (Range) | $\text{m}$ (mét) | Cự ly đo dọc trục từ cản trước xe tới chướng ngại vật phía trước. |
+| $c$ | Vận tốc sóng điện từ (Speed of light) | $\text{m/s}$ | Tốc độ ánh sáng trong không khí ($c \approx 3 \times 10^8\text{ m/s}$). |
+| $T_c$ | Chu kỳ quét xung Chirp (Chirp duration) | $\text{s}$ (hoặc $\mu\text{s}$) | Khoảng thời gian để tần số quét từ $f_{min}$ lên $f_{max}$ (thường $20 - 60\mu\text{s}$). |
+| $f_b$ | Tần số phách (Beat Frequency) | $\text{Hz}$ (hoặc $\text{kHz}$) | Tần số chênh lệch giữa sóng phát đi và sóng dội về tại cùng một thời điểm. |
+| $B$ | Băng thông quét tần số (Chirp Bandwidth) | $\text{Hz}$ | Dải tần số biến thiên: $B = f_{max} - f_{min}$ (dải mmWave ô tô từ $1\text{ GHz} - 4\text{ GHz}$). |
+| $\Delta R$ | Độ phân giải khoảng cách (Range resolution) | $\text{m}$ (mét) | Khả năng phân biệt hai chướng ngại vật nằm cùng một góc phương vị. |
+
+---
 
 ### 2.2. Đo Vận tốc Tương đối qua Hiệu ứng Doppler
-Vận tốc tương đối $v_{rel}$ làm thay đổi pha của sóng phản xạ giữa các chirp liên tiếp:
-$$v_{rel} = \frac{\lambda \cdot \Delta \phi}{4\pi \cdot T_c}$$
+
+Vận tốc tương đối $v_{rel}$ làm thay đổi pha của sóng phản xạ giữa các xung chirp liên tiếp:
+
+$$
+v_{rel} = \frac{\lambda \cdot \Delta \phi}{4\pi \cdot T_c}
+$$
+
+##### Bảng Giải thích Chi tiết Các Đại lượng trong Phép đo Vận tốc Doppler:
+
+| Ký hiệu | Tên gọi Kỹ thuật | Đơn vị | Ý nghĩa & Vai trò Kỹ thuật |
+| :--- | :--- | :--- | :--- |
+| $v_{rel}$ | Vận tốc tương đối (Relative velocity) | $\text{m/s}$ | Vận tốc tiếp cận tức thời giữa xe chủ và xe phía trước ($v_{rel} < 0$ khi xe tiến lại gần). |
+| $\lambda$ | Bước sóng mang (Wavelength) | $\text{m}$ (hoặc $\text{mm}$) | Bước sóng của tần số trung tâm $77\text{ GHz}$ ($\lambda = c / f_0 \approx 3.9\text{ mm}$). |
+| $\Delta \phi$ | Độ lệch pha giữa 2 chirp (Phase shift) | $\text{rad}$ | Chênh lệch góc pha tín hiệu phản xạ giữa 2 chu kỳ chirp liên tiếp. |
+| $T_c$ | Chu kỳ xung chirp | $\text{s}$ | Thời gian giãn cách giữa các xung phát sóng liên tiếp. |
+
+---
 
 ### 2.3. Bố trí Radar trên Xe VinFast VF 8 / VF 9
 Xe trang bị **5 Cảm biến Radar thế hệ mới của ZF Friedrichshafen**:
@@ -77,8 +149,22 @@ Xe trang bị **5 Cảm biến Radar thế hệ mới của ZF Friedrichshafen**
 ## 3. CẢM BIẾN SIÊU ÂM (USS) & LIDAR
 
 ### 3.1. Cảm biến Siêu âm (Ultrasonic Sensors - USS)
-* Đo thời gian bay (Time-of-Flight) của sóng âm trong không khí:
-  $$d = \frac{c_{âm} \cdot \Delta t}{2} \quad (c_{âm} \approx 343\text{ m/s tại } 20^\circ\text{C})$$
+
+Đo khoảng cách dựa trên nguyên lý Thời gian bay (Time-of-Flight - ToF) của chùm sóng âm phản xạ trong không khí:
+
+$$
+d = \frac{c_{âm} \cdot \Delta t}{2}
+$$
+
+##### Bảng Giải thích Chi tiết Các Đại lượng Cảm biến Siêu âm:
+
+| Ký hiệu | Tên gọi Kỹ thuật | Đơn vị | Ý nghĩa Kỹ thuật |
+| :--- | :--- | :--- | :--- |
+| $d$ | Khoảng cách tới chướng ngại vật | $\text{m}$ (mét) | Cự ly gần (tối ưu trong dải $0.15\text{m} - 5.0\text{m}$). |
+| $c_{âm}$ | Vận tốc truyền sóng âm | $\text{m/s}$ | Tốc độ âm thanh trong không khí ($c_{âm} \approx 343\text{ m/s}$ tại $20^\circ\text{C}$). |
+| $\Delta t$ | Thời gian bay (Time-of-Flight) | $\text{s}$ (hoặc $\text{ms}$) | Thời gian đo từ lúc màng loa siêu âm phát xung gõ đến khi nhận lại sóng phản hồi. |
+| Số $2$ ở mẫu | Hệ số quãng đường khứ hồi | - | Sóng âm truyền đi từ cảm biến tới vật thể rồi dội ngược lại quãng đường gấp đôi. |
+
 * **12 cảm biến USS trên VinFast VF 8:** Bố trí 6 cảm biến phía trước và 6 cảm biến phía sau. Các cảm biến góc (Side USS) có góc mở chùm tia rộng hơn để đo chiều dài khe đỗ khi xe chạy ngang qua trong tính năng Hỗ trợ đỗ xe tự động (APA).
 
 ### 3.2. Cảm biến LiDAR (Light Detection and Ranging)
@@ -183,6 +269,24 @@ $$
 $$
 \mathbf{P}_{k|k} = (\mathbf{I} - \mathbf{K} \mathbf{H}_j) \mathbf{P}_{k|k-1}
 $$
+
+##### Bảng Giải thích Chi tiết Các Đại lượng và Ma trận trong Bộ lọc EKF:
+
+| Ký hiệu | Tên gọi Kỹ thuật | Kích thước | Ý nghĩa & Vai trò trong Dung hợp Cảm biến |
+| :--- | :--- | :--- | :--- |
+| $\mathbf{x} = [p_x, p_y, v_x, v_y]^T$ | Vector trạng thái vật thể 2D | $4 \times 1$ | Chứa tọa độ vị trí 2D $[p_x, p_y]$ và vận tốc 2D $[v_x, v_y]$ của xe mục tiêu. |
+| $\mathbf{F}$ | Ma trận chuyển trạng thái (State Transition) | $4 \times 4$ | Mô hình động học chuyển động thẳng đều (Constant Velocity) với chu kỳ lấy mẫu $\Delta t$. |
+| $\mathbf{w}_k$ | Nhiễu quá trình (Process noise) | $4 \times 1$ | Sai số mô hình động học do xe mục tiêu tăng/giảm tốc hoặc chuyển làn, tuân theo phân phối Gauss $\mathcal{N}(0, \mathbf{Q})$. |
+| $\mathbf{Q}$ | Hiệp phương sai nhiễu quá trình | $4 \times 4$ | Độ bất định của mô hình vật lý chuyển động của xe đi trước. |
+| $\mathbf{P}$ | Ma trận hiệp phương sai sai số | $4 \times 4$ | Thể hiện mức độ tin cậy/độ bất định của hệ thống về ước lượng trạng thái hiện tại. |
+| $\mathbf{z}_{radar} = [\rho, \phi, \dot{\rho}]^T$ | Vector đo lường từ Radar | $3 \times 1$ | Tín hiệu trả về từ Radar gồm cự ly $\rho$, góc phương vị $\phi$, và vận tốc Doppler xuyên tâm $\dot{\rho}$. |
+| $h(\mathbf{x})$ | Hàm đo lường phi tuyến tính | $3 \times 1$ | Chuyển đổi trạng thái từ hệ tọa độ Đề-các sang hệ tọa độ cực của Radar. |
+| $\mathbf{H}_j$ | Ma trận Jacobian đo lường | $3 \times 4$ | Ma trận đạo hàm riêng của $h(\mathbf{x})$ theo $\mathbf{x}$, dùng để tuyến tính hóa hệ thống quanh điểm ước lượng. |
+| $\mathbf{y}$ | Sai số đo lường (Measurement Residual) | $3 \times 1$ | Độ lệch giữa kết quả cảm biến thực tế đo được và kết quả ước lượng từ mô hình dự đoán. |
+| $\mathbf{S}$ | Hiệp phương sai sai số đo lường | $3 \times 3$ | Độ bất định tổng hợp của sai số dự đoán và nhiễu cảm biến. |
+| $\mathbf{R}$ | Hiệp phương sai nhiễu cảm biến | $3 \times 3$ | Đặc tính nhiễu vật lý của cảm biến Radar/Camera (được đo kiểm trước từ nhà cung cấp Tier-1). |
+| $\mathbf{K}$ | Độ lợi Kalman (Kalman Gain) | $4 \times 3$ | Trọng số tối ưu hóa: Quyết định hệ thống nên tin tưởng mô hình dự đoán hay tin tưởng tín hiệu cảm biến hơn. |
+| $\mathbf{I}$ | Ma trận đơn vị (Identity Matrix) | $4 \times 4$ | Ma trận đường chéo chính có các phần tử bằng 1. |
 
 ---
 

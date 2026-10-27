@@ -104,6 +104,15 @@ ISO 26262 tập trung xử lý các mối nguy hiểm bắt nguồn từ **hỏn
 
 $$\text{ASIL} = f(S, E, C) \in \{\text{QM}, \text{ASIL-A}, \text{ASIL-B}, \text{ASIL-C}, \text{ASIL-D}\}$$
 
+##### Bảng Giải thích Chi tiết Các Tham số Định lượng ASIL:
+
+| Tham số / Đại lượng | Tên tiếng Anh | Thang đánh giá chuẩn ISO 26262 | Ý nghĩa Kỹ thuật trong Đánh giá Rủi ro ADAS |
+| :--- | :--- | :--- | :--- |
+| $S$ | Severity (Độ nghiêm trọng) | $S0 \rightarrow S3$ | Mức độ tổn thương tiềm tàng đối với người trong xe hoặc người xung quanh ($S0$: không thương tích; $S1$: thương tích nhẹ; $S2$: nặng/đe dọa tính mạng; $S3$: tử vong). |
+| $E$ | Exposure (Tần suất phơi nhiễm) | $E0 \rightarrow E4$ | Xác suất hoặc tần suất xuất hiện của kịch bản vận hành ($E1$: rất hiếm; $E2$: thấp; $E3$: trung bình; $E4$: kịch bản lái xe phổ biến hàng ngày). |
+| $C$ | Controllability (Khả năng kiểm soát) | $C0 \rightarrow C3$ | Khả năng người lái trung bình có thể phản xạ xử lý để tránh xảy ra va chạm ($C1$: $\ge 99\%$ lái xe kiểm soát được; $C2$: $\ge 90\%$; $C3$: $< 90\%$ tài xế không kịp phản ứng). |
+| $\text{ASIL}$ | Automotive Safety Integrity Level | $\text{QM}, \text{A}, \text{B}, \text{C}, \text{D}$ | Cấp độ toàn vẹn an toàn ô tô tích hợp, xác định mức độ ngặt nghèo về kiểm thử và thiết kế vi mạch dự phòng (ASIL-D là mức cao nhất). |
+
 ```
 +-----------+------------+-------------------------------------------+
 | Severity  | Exposure   | Controllability                           |
