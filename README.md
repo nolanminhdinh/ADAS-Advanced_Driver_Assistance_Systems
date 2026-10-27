@@ -136,74 +136,31 @@ Tiêu chuẩn quốc tế **SAE J3016** phân chia tự hành ô tô từ Cấp 
 ### 2.4. Thuật toán Dung hợp Dữ liệu (Sensor Fusion & EKF)
 Hệ thống kết hợp dữ liệu giữa Camera (nhận diện vật thể, phân loại, đo khoảng cách góc ngang tốt) và Radar (đo cự ly xa và vận tốc tương đối Doppler chính xác).
 
-```mermaid
-flowchart LR
-    subgraph EarlyFusion["1. Early Fusion (Raw Level)"]
-        direction TB
-        RawCam["Raw Camera Pixels"]
-        RawRad["Radar Point Cloud"]
-        DNN["Deep Neural Network<br/>(PointPillars / BEVFormer)"]
-        BBox3D["3D Bounding Boxes"]
-        RawCam & RawRad --> DNN --> BBox3D
-    end
+```
+Early Fusion (Raw Level):
+[Raw Camera Pixels] + [Radar Point Cloud] ===(Deep Neural Net)===> [3D Bounding Boxes]
 
-    subgraph LateFusion["2. Late Fusion (Object Level - Chuẩn VinFast VF 8/9)"]
-        direction TB
-        CamDet["Camera Detection<br/>(BBox + Class)"]
-        RadClust["Radar Cluster<br/>(Range + Doppler Vel)"]
-        EKFTrack["Bộ lọc EKF & Hungarian<br/>(Tracking & Fusion)"]
-        UnifiedObj["Danh sách Vật thể Hợp nhất<br/>(Unified Object List)"]
-        CamDet & RadClust --> EKFTrack --> UnifiedObj
-    end
+Late Fusion (Object Level - Standard trên VF 8/9):
+[Camera] ---> Detection Model  ---> [BBox + Object Class] --\
+                                                             +==>[EKF Tracker]==>[Unified Object]
+[Radar]  ---> Cluster / Filter ---> [Range + Doppler Vel] --/
 ```
 
 #### Quy trình & Công thức Toán học: Bộ lọc Kalman Mở rộng (EKF)
 
 Để theo vết (tracking) và dung hợp quỹ đạo vật thể phi tuyến tính, hệ thống triển khai chu trình lặp EKF 3 bước:
 
-```mermaid
-flowchart TD
-    subgraph SENSORS["DỮ LIỆU ĐO LƯỜNG TỪ CẢM BIẾN (MEASUREMENT)"]
-        CAM["Camera: Vị trí góc, BBox [x, y]"]
-        RAD["Radar: Cự ly r, Vận tốc Doppler v_r"]
-    end
-
-    subgraph STEP1["BƯỚC 1: DỰ ĐOÁN (PREDICTION)"]
-        direction TB
-        P1["Dự đoán trạng thái tương lai:<br/>x̂(k|k-1) = F · x̂(k-1|k-1)"]
-        P2["Dự đoán hiệp phương sai sai số:<br/>P(k|k-1) = F · P(k-1|k-1) · Fᵀ + Q"]
-        P1 --> P2
-    end
-
-    subgraph STEP2["BƯỚC 2: LIÊN KẾT DỮ LIỆU (DATA ASSOCIATION)"]
-        direction TB
-        DA["Thuật toán Hungarian<br/>Khớp cặp đối tượng Camera & Radar"]
-        RES["Tính sai số quan sát (Residual / Innovation):<br/>y(k) = z(k) - h(x̂(k|k-1))"]
-        DA --> RES
-    end
-
-    subgraph STEP3["BƯỚC 3: CẬP NHẬT TRẠNG THÁI (CORRECTION)"]
-        direction TB
-        KG["Tính Độ lợi Kalman Gain:<br/>K(k) = P(k|k-1) · Hᵀ · S(k)⁻¹"]
-        ST["Cập nhật trạng thái tối ưu:<br/>x̂(k|k) = x̂(k|k-1) + K(k) · y(k)"]
-        CV["Cập nhật ma trận hiệp phương sai:<br/>P(k|k) = (I - K(k) · H) · P(k|k-1)"]
-        KG --> ST --> CV
-    end
-
-    OUT["DANH SÁCH VẬT THỂ DUY NHẤT (TRACKED OBJECTS)<br/>[x, y, v_x, v_y, a_x, a_y] cung cấp cho ACC / AEB"]
-
-    CAM & RAD --> DA
-    P2 --> RES
-    RES --> KG
-    CV --> OUT
-    CV -.->|Chu kỳ tính toán tiếp theo k+1| P1
-
-    classDef sens fill:#e3f2fd,stroke:#1565c0,stroke-width:2px;
-    classDef step fill:#f3e5f5,stroke:#6a1b9a,stroke-width:2px;
-    classDef target fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px;
-    class CAM,RAD sens;
-    class P1,P2,DA,RES,KG,ST,CV step;
-    class OUT target;
+```
+              CHU TRÌNH LẶP BỘ LỌC KALMAN MỞ RỘNG (EKF SENSOR FUSION)
+              
+   [ CẢM BIẾN ] ---> [ BƯỚC 1: DỰ ĐOÁN ]      ---> [ BƯỚC 2: LIÊN KẾT DỮ LIỆU ]
+   - Camera          - x̂(k|k-1) = F · x̂(k-1|k-1)     (Thuật toán Hungarian)
+   - Radar mmWave    - P(k|k-1) = F · P · Fᵀ + Q                 |
+                                                                 v
+   [ DANH SÁCH VẬT ] <--- [ BƯỚC 3: CẬP NHẬT ]  <--- [ TÍNH SAI SỐ QUAN SÁT ]
+   - Unified Objects      - K = P · Hᵀ · S⁻¹             - y = z - h(x̂)
+   - [x, y, vx, vy, ax]   - x̂(k|k) = x̂ + K·y
+                          - P(k|k) = (I - K·H)·P
 ```
 
 ---
@@ -339,13 +296,15 @@ $$
 \delta(t) = \theta_e(t) + \arctan\left(\frac{k \cdot e_y(t)}{v(t) + \epsilon}\right)
 $$
 
-```mermaid
-flowchart LR
-    LANE["Đường tâm làn (Target Lane Center)"]
-    ERR["Sai số vị trí e_y & Sai số góc θ_e"]
-    STANLEY_ALGO["Thuật toán Stanley:<br/>δ(t) = θ_e + arctan(k · e_y / (v + ε))"]
-    EPS_ACT["Mô-tơ trợ lực lái điện (EPS)"]
-    LANE --> ERR --> STANLEY_ALGO --> EPS_ACT
+```
+                           Làn đường mong muốn (Path)
+         --------------------------------------------------
+                             / | 
+                            /  | e_y (Sai số dịch chuyển ngang)
+                           /   |
+               \theta_e   /    v
+               (Góc lệch)/___ [Xe EGO] ===> Vận tốc v(t)
+                        /
 ```
 
 *Ứng dụng trên xe VinFast:* Tín hiệu góc lái $\delta$ được gửi qua mạng CAN-FD tốc độ cao tới hộp trợ lực lái điện (EPS). Hệ thống kiểm soát mượt mà cả trên cung đường thẳng lẫn khúc cua có bán kính cong lớn trên đường cao tốc.

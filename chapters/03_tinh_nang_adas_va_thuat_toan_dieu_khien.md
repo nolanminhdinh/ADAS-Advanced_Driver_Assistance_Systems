@@ -6,44 +6,21 @@
 
 Điều khiển dọc (Longitudinal Control) chịu trách nhiệm quản lý gia tốc dương (tăng tốc) và gia tốc âm (phanh giảm tốc) của xe để duy trì vận tốc cài đặt và khoảng cách an toàn với chướng ngại vật phía trước.
 
-```mermaid
-flowchart LR
-    subgraph INPUTS["TÍN HIỆU ĐẦU VÀO"]
-        VSET["Vận tốc cài đặt: v_set"]
-        DIST["Khoảng cách đo: d_rel"]
-        VLEAD["Vận tốc xe trước: v_lead"]
-    end
-
-    subgraph CONTROLLER["BỘ ĐIỀU KHIỂN DỌC (LONGITUDINAL CONTROLLER)"]
-        ALGO["Thuật toán Điều khiển<br/>(MPC / PID)"]
-        AREQ["Gia tốc yêu cầu:<br/>a_req"]
-        ALGO --> AREQ
-    end
-
-    subgraph ARBITER["BỘ PHÂN CHIA QUYỀN LỰC (ARBITER)"]
-        CHECK{"Kiểm tra a_req"}
-    end
-
-    subgraph ACTUATORS["CƠ CẤU CHẤP HÀNH (ACTUATION)"]
-        VCU["Hệ truyền động Điện (VCU / Inverter)<br/>Mô-men kéo Motor (a_req > 0)"]
-        ESP["Hệ thống Phanh Điện tử (ESP / iBooster)<br/>Áp suất dầu phanh (a_req < 0)"]
-    end
-
-    VSET --> ALGO
-    DIST --> ALGO
-    VLEAD --> ALGO
-    AREQ --> CHECK
-    CHECK -->|Gia tốc dương: Tăng tốc| VCU
-    CHECK -->|Gia tốc âm: Phanh giảm tốc| ESP
-
-    classDef in fill:#e1f5fe,stroke:#0288d1,stroke-width:2px;
-    classDef ctrl fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px;
-    classDef arb fill:#fff3e0,stroke:#f57c00,stroke-width:2px;
-    classDef act fill:#e8f5e9,stroke:#388e3c,stroke-width:2px;
-    class VSET,DIST,VLEAD in;
-    class ALGO,AREQ ctrl;
-    class CHECK arb;
-    class VCU,ESP act;
+```
+                           SƠ ĐỒ KHỐI ĐIỀU KHIỂN DỌC
+                           
+[ Vận tốc mong muốn v_set ] 
+[ Khoảng cách đo d_rel     ] ---> [ Bộ Điều khiển Dọc ] ---> [ Gia tốc yêu cầu a_req ]
+[ Vận tốc xe trước v_lead ]        (Thuật toán MPC/PID)               |
+                                                                      v
+                                                     +----------------------------------+
+                                                     | BỘ PHÂN CHIA QUYỀN LỰC (ARBITER) |
+                                                     +----------------------------------+
+                                                        /                            \
+                                      Gia tốc dương: a_req > 0 /                              \ Gia tốc âm: a_req < 0
+                                                           v                                v
+                                            [ Mô-men Động cơ VCU ]              [ Áp suất Dầu Phanh ESP ]
+                                            (Tăng tốc phương tiện)              (Phanh giảm tốc khẩn cấp)
 ```
 
 ---
@@ -96,16 +73,40 @@ $$
 
 Hệ thống AEB trên VinFast VF 8 phân chia quy trình can thiệp theo 4 giai đoạn nghiêm ngặt để đảm bảo an toàn tối đa nhưng không gây hoảng loạn cho người lái:
 
-```mermaid
-stateDiagram-v2
-    [*] --> Safe : Khởi động hệ thống
-    Safe --> FCW : TTC <= 2.8s
-    FCW --> Safe : Lái xe can thiệp hoặc TTC > 2.8s
-    FCW --> Brake_Prefill : TTC <= 1.8s
-    Brake_Prefill --> Safe : Nguy cơ đã qua
-    Brake_Prefill --> Full_AEB : TTC <= 1.2s
-    Full_AEB --> Stopped : Xe dừng hẳn an toàn
-    Stopped --> [*] : Giữ phanh an toàn 2s sau dừng
+```
+                           MÁY TRẠNG THÁI PHANH KHẨN CẤP (AEB STATE MACHINE)
+                           
+            +----------------------------------------------------------------+
+            |                        1. SAFE (BÌNH THƯỜNG)                   |
+            |            Giám sát thụ động, tính toán TTC liên tục           |
+            +----------------------------------------------------------------+
+                                       |
+                                       | TTC <= 2.8s
+                                       v
+            +----------------------------------------------------------------+
+            |                        2. FCW (CẢNH BÁO SỚM)                   |
+            |        Chuông báo tít tít, chớp đỏ HUD trên kính lái           |
+            +----------------------------------------------------------------+
+                                       |
+                                       | TTC <= 1.8s
+                                       v
+            +----------------------------------------------------------------+
+            |                    3. BRAKE PREFILL & HBA SẴN SÀNG             |
+            |       Bơm ESP nhấp phanh mồi 2-5 bar, khử khe hở má phanh      |
+            +----------------------------------------------------------------+
+                                       |
+                                       | TTC <= 1.2s
+                                       v
+            +----------------------------------------------------------------+
+            |                     4. FULL AEB (PHANH KHẨN CẤP)               |
+            |          Phanh tối đa a = -9.8 m/s² (-1g) để dừng hẳn xe        |
+            +----------------------------------------------------------------+
+                                       |
+                                       | Xe dừng hẳn (v = 0)
+                                       v
+            +----------------------------------------------------------------+
+            |                   GIỮ PHANH AN TOÀN SAU KHI DỪNG               |
+            +----------------------------------------------------------------+
 ```
 
 | Giai đoạn | Điều kiện Kích hoạt | Hành vi Hệ thống | Cơ cấu Chấp hành (Actuator) |
@@ -140,16 +141,14 @@ $$
 
 Trong khi các hệ thống thế hệ cũ dùng bộ điều khiển PID thuần túy (dễ bị vọt lố overshoot và phanh giật), **VinFast VF 8 / VF 9 ứng dụng bộ điều khiển MPC** để tối ưu hóa đồng thời tính an toàn, sự êm dịu và hiệu suất năng lượng.
 
-```mermaid
-flowchart TD
-    subgraph MPC_CYCLE["CHU TRÌNH TỐI ƯU HÓA MPC (RECEDING HORIZON)"]
-        direction TB
-        MEAS["1. Đo lường trạng thái hiện tại:<br/>Vận tốc v(t), Khoảng cách d(t)"]
-        OPT["2. Giải bài toán quy hoạch toàn phương (QP):<br/>Tối ưu hóa hàm mục tiêu J trong chân trời N_p"]
-        APPLY["3. Áp dụng hành động điều khiển đầu tiên:<br/>Gia tốc a_req = a(t+1) gửi tới VCU / ESP"]
-        SHIFT["4. Tịnh tiến cửa sổ thời gian (Receding Horizon):<br/>t = t + Δt, lặp lại chu trình tại tần số 20Hz"]
-        MEAS --> OPT --> APPLY --> SHIFT --> MEAS
-    end
+```
+                   CHU TRÌNH TỐI ƯU HÓA MPC (RECEDING HORIZON)
+                   
+   [ 1. Đo lường trạng thái ] ---> [ 2. Giải bài toán QP ] ---> [ 3. Áp dụng a_req ]
+   (Vận tốc v(t), Cự ly d(t))      (Tối ưu hóa J trong N_p)     (Gửi tới VCU / ESP)
+               ^                                                         |
+               |                                                         v
+               +----------------- [ 4. Tịnh tiến t = t + Δt ] <----------+
 ```
 
 ##### 1. Hàm Mục tiêu Tối ưu hóa (Cost Function) trong Chân trời Dự báo $N_p$:
@@ -195,15 +194,28 @@ $$
 
 Để thiết kế thuật toán điều khiển góc lái ở dải vận tốc thông thường, phương tiện được đơn giản hóa thành mô hình 2 bánh chuyển động trên mặt phẳng:
 
-```mermaid
-flowchart TD
-    subgraph BICYCLE_MODEL["MÔ HÌNH HÌNH HỌC ĐỘNG HỌC XE ĐẠP"]
-        FW["Bánh trước (Front Wheel)<br/>Góc lái: δ"]
-        CG["Trọng tâm xe (CG)<br/>Vận tốc: v, Góc trượt: β"]
-        RW["Bánh sau (Rear Wheel)<br/>Tâm quay tức thời: ICR"]
-        FW ---|Khoảng cách l_f| CG
-        CG ---|Khoảng cách l_r| RW
-    end
+```
+                                 MÔ HÌNH HÌNH HỌC ĐỘNG HỌC XE ĐẠP
+                                 
+                                       Bánh trước (Front Wheel)
+                                            /
+                                           /  Góc lái \delta
+                                          /
+                                        +---+
+                                        |   |
+                                        +---+
+                                          |
+                                          |  Khoảng cách l_f
+                                          v
+                                    (Trọng tâm CG) ===> Vận tốc v, Góc trượt \beta
+                                          ^
+                                          |  Khoảng cách l_r
+                                          |
+                                        +---+
+                                        |   |
+                                        +---+
+                                       Bánh sau (Rear Wheel)
+                                    (Chiều dài cơ sở L = l_f + l_r)
 ```
 
 ##### Hệ Phương trình Trạng thái Động học:
@@ -247,20 +259,20 @@ Thuật toán Stanley (phát triển trong giải đua xe tự hành DARPA Grand
 1. **Bù góc lệch hướng ($\theta_e$):** Giúp xe quay đầu song song với tiếp tuyến tâm làn.
 2. **Bù sai số vị trí ngang ($e_y$):** Kéo xe dịch chuyển tịnh tiến dần về tâm làn đường.
 
-```mermaid
-flowchart TD
-    subgraph STANLEY["NGUYÊN LÝ HÌNH HỌC THUẬT TOÁN STANLEY"]
-        LANE["Đường tâm làn mong muốn (Target Lane Center)"]
-        ERR_Y["Sai số vị trí lệch ngang tâm làn: e_y"]
-        ERR_PSI["Sai số góc hướng đầu xe: θ_e"]
-        CALC["Công thức Stanley:<br/>δ(t) = θ_e(t) + arctan(k · e_y / (v + ε))"]
-        EPS_ACT["Mô-tơ trợ lực lái điện (EPS)"]
-        LANE --> ERR_Y
-        LANE --> ERR_PSI
-        ERR_Y --> CALC
-        ERR_PSI --> CALC
-        CALC --> EPS_ACT
-    end
+```
+                                NGUYÊN LÝ HÌNH HỌC THUẬT TOÁN STANLEY
+                                
+                                   Đường tâm làn mong muốn (Target Lane Center)
+          ---------------------------------------------------------------------------------
+                                       / |
+                                      /  | e_y (Khoảng cách sai số lệch tâm ngang)
+                         \theta_e    /   |
+                        (Góc lệch)  /    v
+                                   /____ [Tâm trục trước Xe EGO] ===> Vận tốc v(t)
+                                  /
+                                 /
+          Công thức góc lái: \delta(t) = \theta_e(t) + arctan( (k * e_y) / (v + \epsilon) )
+          ===> Gửi góc lái \delta(t) tới Mô-tơ trợ lực lái điện (EPS)
 ```
 
 ##### Công thức Điều khiển Góc Lái Stanley:
@@ -311,12 +323,13 @@ $$
 y(t) = a_0 + a_1 t + a_2 t^2 + a_3 t^3 + a_4 t^4 + a_5 t^5
 $$
 
-```mermaid
-flowchart LR
-    START["Thời điểm t = 0<br/>Làn hiện tại (y = 0)<br/>Vận tốc ngang = 0<br/>Gia tốc ngang = 0"]
-    TRANSITION["Quỹ đạo Đa thức Bậc 5<br/>Biến thiên gia tốc êm ái<br/>Không giật (Zero Jerk)"]
-    FINISH["Thời điểm t = T (4s - 6s)<br/>Làn mục tiêu (y = W = 3.75m)<br/>Vận tốc ngang = 0<br/>Gia tốc ngang = 0"]
-    START --> TRANSITION --> FINISH
+```
+                       QUY TRÌNH CHUYỂN LÀN TỰ ĐỘNG (AUTO LANE CHANGE - ALC)
+                       
+   [ Thời điểm t = 0 ]      ===>      [ Quỹ đạo Đa thức Bậc 5 ]      ===>      [ Thời điểm t = T (4s - 6s) ]
+   - Làn ban đầu (y = 0)              - y(t) = a0 + a1*t + ... + a5*t^5        - Làn đích (y = W = 3.75m)
+   - Vận tốc ngang = 0                - Biến thiên gia tốc êm dịu              - Vận tốc ngang = 0
+   - Gia tốc ngang = 0                - Triệt tiêu hoàn toàn giật (Zero Jerk)  - Gia tốc ngang = 0
 ```
 
 ##### 6 Điều kiện Biên để Xác định Bộ Hệ số ($a_0 \dots a_5$):
