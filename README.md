@@ -26,6 +26,7 @@
 | **Chương 8** | Chuyên Đề Kỹ Thuật Kiểm Thử & Thẩm Định Hệ Thống (System V&V) | [Xem Chi Tiết Chương 8](./chapters/08_chuyen_sau_kiem_thu_va_tham_dinh_he_thong.md) |
 | **Chương 9** | Chuyên Đề Mạng Truyền Thông Bus CAN & CAN-FD Thực Chiến | [Xem Chi Tiết Chương 9](./chapters/09_chuyen_sau_mang_bus_can_va_can_fd.md) |
 | **Chương 10** | Chuyên Đề Phân Tích Dữ Liệu Đo Kiểm & Điều Tra Lỗi ADAS (RCA) | [Xem Chi Tiết Chương 10](./chapters/10_chuyen_sau_phan_tich_du_lieu_log_adas.md) |
+| **Phân Tích Dữ Liệu ADAS** | Thư Mục Chuyên Sâu: Xử Lý, Lưu Trữ & Phân Tích Log ADAS Trên Excel | [Xem Thư Mục Phân Tích Dữ Liệu](./phan_tich_du_lieu_adas/README.md) |
 | **Tóm Tắt Bài Báo Khoa Học** | Tuyển Tập Tóm Tắt & Phân Tích Các Bài Báo Nền Tảng Về ADAS/AV (Kèm Link Gốc) | [Xem Thư Mục Tóm Tắt Bài Báo](./paper_summaries/README.md) |
 | **Hỏi đáp & Giải thích** | Thư Mục Tài Liệu Giải Thích Chi Tiết Từng Khái Niệm Phức Tạp | [Xem Thư Mục Giải Thích](./explanations/README.md) |
 | **Phụ lục** | Trích Dẫn Nguồn Học Thuật & Bản Quyền Sở Hữu Trí Tuệ | [Xem Chi Tiết Phụ Lục](#trích-dẫn-tài-liệu-tham-khảo--tuyên-bố-bản-quyền-sở-hữu-trí-tuệ) |
