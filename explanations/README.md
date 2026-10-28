@@ -13,6 +13,16 @@
   - 4 tình huống phân tích thực tế trên các tính năng ADAS (LKA, AEB, ACC, Gạt mưa).
   - Yêu cầu kiểm thử ngặt nghèo bắt buộc đối với mức ASIL-D (100% MC/DC Coverage, HIL Fault Injection).
 
+### Chuyên Đề Thực Chiến: Mạng Bus CAN & Phân Tích Dữ Liệu Log ADAS
+* [Hướng dẫn Thực chiến: Đọc, Hiểu & Giải mã Tệp DBC (CAN Database) bằng Python](./kiem_thu_va_log/01_huong_dan_doc_va_giai_ma_dbc_can.md)
+  - Phân tích cú pháp `BO_`, `SG_`, các từ khóa DBC.
+  - Phân biệt chi tiết ma trận bit Little Endian (Intel `@1`) vs Big Endian (Motorola `@0`).
+  - Code Python hoàn chỉnh giải mã tín hiệu nhị phân thành giá trị vật lý sử dụng thư viện `cantools`.
+* [Hướng dẫn Thực chiến: Kịch bản Python Tự động Phát hiện Lỗi Phanh Giật Oan (Phantom Braking)](./kiem_thu_va_log/02_kich_ban_python_tu_dong_bat_loi_phantom_braking.md)
+  - Quy trình tự động quét tệp log đo kiểm `.mf4` / `.blf`.
+  - Code Python trích xuất chuỗi thời gian và vẽ đồ thị 3 tầng đối soát đa cảm biến (Speed, Accel, Radar vs Camera).
+  - Cách trình bày bằng chứng lỗi trong báo cáo kỹ thuật (Defect Report).
+
 ---
 
 *(Các bài giải thích cho các Chương 2, 3, 4, 5, 6, 7, 8 sẽ tiếp tục được bổ sung tự động theo tiến độ học tập và nghiên cứu của học viên).*
